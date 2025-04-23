@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Devious</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bungee Outline&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+   
+<body class="flex flex-col items-center min-h-screen p-4"> <header class="text-center mb-6 w-full max-w-3xl">
+         <img
+            src="https://see.fontimg.com/api/rf5/ywWM/NDYyOGM0ZjE2MjI4NGQ0MmFjZWUwMzA5YzQ3Yzg0OTkuVFRG/REVWSU9VUw/prayer.png?r=fs&h=47&w=1000&fg=061048&bg=FAFAFA&tb=1&s=47"
+            alt="Game Banner - Replace with descriptive text"
+            class="w-50 h-auto mb-4 rounded-md shadow-sm game-banner-image mx-auto"
+            onerror="this.onerror=null; this.src='https://placehold.co/800x150/cccccc/ffffff?text=Image+Error';"
+         >
+        <h2 class="text-1xl font-bold mb-2 text-stone-600">Aesthete or addlepate?</h2>
+        <h2 class="text-1xl font-regular mb-2 text-stone-600">Solve the cunning cultural puzzle to find out!</h2>
+        <div id="source-type-emoji" class="text-5xl mb-2"></div> 
+         <div id="puzzle-title" class="text-lg text-stone-700">Solve the clues to find the link!</div>
+         <div id="score-display"></div>
+         </header>
+
+    <div id="message-area" class="h-10 mb-4 text-center font-medium"></div>
+
+    <div id="missing-link-grid" class="missing-link-grid">
+        </div>
+
+     <div id="solutions-modal-container"></div>
+
+ <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f5f5f4;
+        }
+        h1 {
+            font-family: 'Bungee Outline', Sans-Serif;
+            font-weight: 400;
+        }
+
+        /* --- Animations --- */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
+            20%, 40%, 60%, 80% { transform: translateX(6px); }
+        }
+        .shake { animation: shake 0.5s ease-in-out; }
+        @keyframes reveal {
+            0% { transform: scale(0.5); opacity: 0; }
+            80% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .final-celebration { animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: .7; }
+        }
+
+        /* --- General Styles --- */
+        #source-type-emoji {
+            font-size: 3rem; line-height: 1; margin-bottom: 0.5rem;
+        }
+        #puzzle-title {
+            color: #44403c;
+        }
+
+        /* Grid container */
+        .missing-link-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(120px, 1fr));
+            grid-template-rows: repeat(3, minmax(100px, 1fr));
+            gap: 1rem; width: 100%; max-width: 500px; aspect-ratio: 1 / 1; margin-bottom: 1.5rem;
+        }
+
+        /* Central Missing Link Box */
+        .missing-link-center {
+            grid-column: 2 / 3;
+            grid-row: 2 / 3;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #ffffff; border: 2px solid #d1d5db; border-radius: 0.375rem; padding: 1rem; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); text-align: center;
+        }
+        .missing-link-center input {
+            width: 90%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 0.25rem; margin-bottom: 8px; text-align: center;
+        }
+         .missing-link-center input::placeholder { color: #9ca3af; }
+         .missing-link-center input.input-error { border-color: #ef4444; background-color: #fee2e2; }
+        .missing-link-center button {
+            padding: 4px 12px; font-size: 0.85rem; background-color: #12b093; color: white; border: none; border-radius: 0.25rem; cursor: pointer; transition: background-color 0.2s;
+        }
+        .missing-link-center button:hover:not(:disabled) { background-color: #0e8e77; }
+        .missing-link-center button:disabled { background-color: #6cd4c1; cursor: not-allowed; }
+        .missing-link-center p { font-size: 0.8rem; color: #57534e; margin-bottom: 5px; }
+        .missing-link-center .correct-link {
+            font-weight: 700; font-size: 1.1rem; color: #12b093; animation: reveal 0.6s ease-out forwards;
+        }
+
+        /* --- Clue Box Styles (Phase 1) --- */
+        .clue-box-container {
+            perspective: 1000px; min-height: 100px; height: 100%;
+        }
+        .clue-box-container[data-clue-id='1'] { grid-column: 2 / 3; grid-row: 1 / 2; }
+        .clue-box-container[data-clue-id='2'] { grid-column: 1 / 2; grid-row: 2 / 3; }
+        .clue-box-container[data-clue-id='3'] { grid-column: 3 / 4; grid-row: 2 / 3; }
+        .clue-box-container[data-clue-id='4'] { grid-column: 2 / 3; grid-row: 3 / 4; }
+
+        .clue-box-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; cursor: pointer; }
+        .clue-box-container.is-flipped .clue-box-inner { transform: rotateY(180deg); }
+        .clue-box-front, .clue-box-back { position: absolute; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.375rem; background-color: #ffffff; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); color: #1f2937; }
+        .clue-box-back { background-color: #f0f9ff; border-color: #7dd3fc; transform: rotateY(180deg); }
+        .clue-box-back input { width: 90%; padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 0.25rem; margin-bottom: 5px; text-align: center; }
+        .clue-box-back input.input-error { border-color: #ef4444; background-color: #fee2e2; }
+        .clue-box-back button {
+             padding: 3px 10px; font-size: 0.8rem; background-color: #12b093; color: white; border: none; border-radius: 0.25rem; cursor: pointer; transition: background-color 0.2s;
+         }
+        .clue-box-back button:hover { background-color: #0e8e77; }
+        .clue-solved .clue-box-front {
+            background-color: #12b093; border-color: #0e8e77; color: #ffffff; font-weight: 500;
+        }
+        .clue-solved .clue-box-inner { cursor: default; }
+         .puzzle-solved .clue-box-front { opacity: 0.7; }
+         .puzzle-solved .clue-box-inner { cursor: default; }
+
+        /* --- Phase 2 Box Styles --- */
+         .phase2-box {
+             grid-column: var(--col);
+             grid-row: var(--row);
+             background-color: #f0fdfa;
+             border: 2px dashed #5eead4;
+             border-radius: 0.375rem;
+             padding: 0.75rem;
+             display: flex;
+             flex-direction: column;
+             align-items: center;
+             justify-content: center;
+             text-align: center;
+             opacity: 1;
+             pointer-events: none;
+             transition: background-color 0.3s, border-color 0.3s;
+         }
+         .phase2-box > * {
+             opacity: 0;
+             pointer-events: none;
+             transition: opacity 0.4s ease-in-out;
+         }
+         .phase2-box.active {
+             pointer-events: auto;
+         }
+          .phase2-box.active > * {
+             opacity: 1;
+             pointer-events: auto;
+         }
+
+         .phase2-box .arrow {
+             font-size: 1.875rem; line-height: 2.25rem; color: #0f766e; margin-bottom: 0.25rem;
+         }
+         .phase2-box input {
+             width: 85%; padding: 3px 6px; border: 1px solid #99f6e4; border-radius: 0.25rem; margin-bottom: 4px; text-align: center; font-size: 0.8rem;
+         }
+         .phase2-box input.input-error { border-color: #fb7185; background-color: #ffe4e6; }
+         .phase2-box button {
+             padding: 2px 8px; font-size: 0.75rem; background-color: #12b093; color: white; border: none; border-radius: 0.25rem; cursor: pointer; transition: background-color 0.2s;
+         }
+         .phase2-box button:hover:not(:disabled) { background-color: #0e8e77; }
+         .phase2-box button:disabled { background-color: #6cd4c1; cursor: not-allowed; }
+
+         .phase2-box.solved {
+             background-color: #12b093; border-color: #0e8e77; color: #ffffff;
+             pointer-events: none;
+         }
+         .phase2-box.solved > * {
+             opacity: 1;
+             pointer-events: none;
+         }
+         .phase2-box.solved .solution-text {
+             font-weight: 500; font-size: 0.9rem;
+         }
+
+    </style>
+</head>
+<body class="flex flex-col items-center min-h-screen p-4 bg-stone-100">
+
+    <header class="text-center mb-4">
+    <h1 class="text-4xl font-bold mb-2 text-stone-800">Devious</h1>
+    <div id="puzzle-title" class="text-lg text-stone-700">Solve the clues to find the link!</div>
+    <div id="source-type-emoji" class="text-2xl mb-2"></div>
+</header>
+
+    <div id="message-area" class="h-10 mb-4 text-center font-medium"></div>
+
+    <div id="missing-link-grid" class="missing-link-grid">
+         </div>
+
+    <script>
+        // --- Game Data ---
+        const gameData = {
+            missingLink: "Pride and Prejudice",
+            sourceTypeEmoji: '📚',
+            clues: [
+                { id: 1, text: "Almost a Greek mode (5)", solution: "Lydia", solved: false },
+                { id: 2, text: "Plain girl? (4)", solution: "Jane", solved: false },
+                { id: 3, text: "Fund baby cat? (5)", solution: "Kitty", solved: false },
+                { id: 4, text: "Short for I or II (6)", solution: "Lizzie", solved: false }
+            ],
+            phase2Clues: [
+                { id: 'p2_1', gridPos: [1, 1], arrow: '&#8625;', links: [2, 1], solution: "Wickham", solved: false },
+                { id: 'p2_2', gridPos: [1, 3], arrow: '&#8624;', links: [3, 1], solution: "Wickham", solved: false },
+                { id: 'p2_3', gridPos: [3, 1], arrow: '&#8627;', links: [2, 4], solution: "Bingley", solved: false },
+                { id: 'p2_4', gridPos: [3, 3], arrow: '&#8626;', links: [3, 4], solution: "Collins", solved: false }
+            ],
+            getClueById: function(id) {
+                return this.clues.find(clue => clue.id === id);
+            },
+            getPhase2ClueById: function(id) {
+                 return this.phase2Clues.find(clue => clue.id === id);
+            }
+        };
+
+        // --- Game State ---
+        let solvedCluesCount = 0;
+        let totalClues = gameData.clues.length;
+        let linkSolved = false;
+        let solvedPhase2Count = 0;
+        let totalPhase2Clues = gameData.phase2Clues.length;
+        let gameComplete = false;
+
+        // --- DOM Elements ---
+        const gridEl = document.getElementById('missing-link-grid');
+        const messageAreaEl = document.getElementById('message-area');
+        const emojiIndicatorEl = document.getElementById('source-type-emoji');
+        const puzzleTitleEl = document.getElementById('puzzle-title');
+
+
+        // --- Initialization ---
+        function initGame() {
+            gridEl.innerHTML = '';
+            solvedCluesCount = 0;
+            linkSolved = false;
+            solvedPhase2Count = 0;
+            gameComplete = false;
+            messageAreaEl.textContent = '';
+            puzzleTitleEl.textContent = 'Solve the clues to find the link!';
+            emojiIndicatorEl.textContent = gameData.sourceTypeEmoji || '';
+            gameData.clues.forEach(clue => clue.solved = false);
+            gameData.phase2Clues.forEach(clue => clue.solved = false);
+
+            // --- Create ALL Grid Boxes (Phase 1 Clues, Center, Phase 2 Placeholders) ---
+            // Phase 1 Clue Boxes
+            gameData.clues.forEach(clueData => {
+                gridEl.appendChild(createPhase1ClueBox(clueData));
+            });
+
+            // Central Missing Link Box
+            gridEl.appendChild(createCenterBox());
+
+            // Phase 2 Corner Boxes (created hidden)
+            gameData.phase2Clues.forEach(p2Data => {
+                 gridEl.appendChild(createPhase2Box(p2Data));
+            });
+
+            checkAllCluesSolved();
+        }
+
+        // --- Element Creation Functions ---
+        function createPhase1ClueBox(clueData) {
+             const container = document.createElement('div');
+             container.classList.add('clue-box-container');
+             container.dataset.clueId = clueData.id;
+
+             const inner = document.createElement('div');
+             inner.classList.add('clue-box-inner');
+
+             const front = document.createElement('div');
+             front.classList.add('clue-box-front');
+             front.textContent = clueData.text;
+
+             const back = document.createElement('div');
+             back.classList.add('clue-box-back');
+
+             const input = document.createElement('input');
+             input.type = 'text'; input.placeholder = 'Your answer...';
+             input.addEventListener('keydown', (e) => {
+                 if (e.key === 'Enter') handleClueSubmit(clueData.id);
+                 input.classList.remove('input-error');
+             });
+
+             const button = document.createElement('button');
+             button.textContent = 'Submit';
+             button.addEventListener('click', (e) => { e.stopPropagation(); handleClueSubmit(clueData.id); });
+
+             back.appendChild(input); back.appendChild(button);
+             inner.appendChild(front); inner.appendChild(back);
+             container.appendChild(inner);
+             container.addEventListener('click', handleBoxClick);
+             return container;
+        }
+
+        function createCenterBox() {
+            const centerBox = document.createElement('div');
+            centerBox.classList.add('missing-link-center');
+            centerBox.id = 'missing-link-center-box';
+
+            const centerTitle = document.createElement('p');
+            centerTitle.textContent = 'The Missing Link?'; centerTitle.id = 'missing-link-title';
+
+            const centerInput = document.createElement('input');
+            centerInput.type = 'text'; centerInput.id = 'missing-link-guess';
+            centerInput.placeholder = 'Guess the link...'; centerInput.disabled = true;
+            centerInput.addEventListener('keydown', (e) => {
+                 if (e.key === 'Enter') handleLinkSubmit();
+                 centerInput.classList.remove('input-error');
+            });
+
+            const centerButton = document.createElement('button');
+            centerButton.id = 'submit-link'; centerButton.textContent = 'Submit Link'; centerButton.disabled = true;
+            centerButton.addEventListener('click', handleLinkSubmit);
+
+            centerBox.appendChild(centerTitle); centerBox.appendChild(centerInput); centerBox.appendChild(centerButton);
+            return centerBox;
+        }
+
+         function createPhase2Box(p2Data) {
+             const box = document.createElement('div');
+             box.classList.add('phase2-box');
+             box.dataset.phase2ClueId = p2Data.id;
+
+             // *** Directly set grid position using inline styles ***
+             box.style.gridColumn = `${p2Data.gridPos[1]} / span 1`;
+             box.style.gridRow = `${p2Data.gridPos[0]} / span 1`;
+
+             const arrowEl = document.createElement('div');
+             arrowEl.classList.add('arrow');
+             arrowEl.innerHTML = p2Data.arrow;
+             const input = document.createElement('input');
+             input.type = 'text'; input.placeholder = 'Link?';
+             input.addEventListener('keydown', (e) => {
+                 if (e.key === 'Enter') handlePhase2Submit(p2Data.id);
+                 input.classList.remove('input-error');
+             });
+
+             const button = document.createElement('button');
+             button.textContent = 'Submit';
+             button.addEventListener('click', (e) => { e.stopPropagation(); handlePhase2Submit(p2Data.id); });
+
+             box.appendChild(arrowEl);
+             box.appendChild(input);
+             box.appendChild(button);
+             return box;
+         }
+
+        // --- Event Handlers & Logic ---
+
+        function handleBoxClick(event) {
+            const container = event.currentTarget;
+            if (linkSolved || gameComplete) return;
+            const clueId = parseInt(container.dataset.clueId);
+            if (!clueId) return;
+            const clueData = gameData.getClueById(clueId);
+            if (!clueData || clueData.solved) return;
+            if (container.classList.contains('is-flipped')) {
+                 if (event.target.tagName === 'INPUT' || event.target.tagName === 'BUTTON') return;
+                 container.classList.remove('is-flipped');
+                 clearMessage();
+            } else {
+                container.classList.add('is-flipped');
+                const input = container.querySelector('.clue-box-back input');
+                if(input) input.focus();
+                clearMessage();
+            }
+        }
+
+        function handleClueSubmit(clueId) {
+            if (linkSolved || gameComplete) return;
+
+            const container = gridEl.querySelector(`.clue-box-container[data-clue-id='${clueId}']`);
+            const input = container.querySelector('.clue-box-back input');
+            const front = container.querySelector('.clue-box-front');
+            const clueData = gameData.getClueById(clueId);
+            const guess = input.value.trim();
+
+            if (!clueData || !guess || clueData.solved) return;
+
+            const normalizedGuess = guess.toLowerCase().replace(/\s+/g, ' ');
+            const normalizedSolution = clueData.solution.toLowerCase().replace(/\s+/g, ' ');
+
+            if (normalizedGuess === normalizedSolution) {
+                clueData.solved = true;
+                solvedCluesCount++;
+                front.textContent = clueData.solution;
+                container.classList.add('clue-solved');
+                container.classList.remove('is-flipped');
+                input.value = ''; input.disabled = true;
+                container.querySelector('.clue-box-back button').disabled = true;
+                displayMessage(`Clue ${clueId} solved!`, 'text-teal-600');
+                checkAllCluesSolved();
+            } else {
+                input.classList.add('input-error');
+                displayMessage('Incorrect clue answer.', 'text-orange-600');
+                container.querySelector('.clue-box-inner').classList.add('shake');
+                setTimeout(() => { container.querySelector('.clue-box-inner').classList.remove('shake'); }, 500);
+            }
+        }
+
+         function checkAllCluesSolved() {
+             const linkInput = document.getElementById('missing-link-guess');
+             const linkButton = document.getElementById('submit-link');
+             if (solvedCluesCount === totalClues && !linkSolved) {
+                 linkInput.disabled = false; linkButton.disabled = false;
+                 displayMessage('All clues solved! Can you guess the Missing Link?', 'text-teal-600');
+                 linkInput.focus();
+             } else if (!linkSolved) {
+                 linkInput.disabled = true; linkButton.disabled = true;
+             }
+         }
+
+        function handleLinkSubmit() {
+            if (linkSolved || gameComplete) return;
+
+            const linkInput = document.getElementById('missing-link-guess');
+            const guess = linkInput.value.trim();
+            const normalizedGuess = guess.toLowerCase().replace(/\s+/g, ' ');
+            const normalizedSolution = gameData.missingLink.toLowerCase().replace(/\s+/g, ' ');
+
+            if (normalizedGuess === normalizedSolution) {
+                linkSolved = true;
+                displayMessage('Missing Link Correct!', 'text-teal-600');
+                linkInput.disabled = true;
+                document.getElementById('submit-link').disabled = true;
+                document.getElementById('missing-link-title').textContent = 'Link Found!';
+
+                const centerBox = document.getElementById('missing-link-center-box');
+                linkInput.style.display = 'none';
+                document.getElementById('submit-link').style.display = 'none';
+
+                const solvedLinkText = document.createElement('div');
+                solvedLinkText.classList.add('correct-link');
+                solvedLinkText.textContent = gameData.missingLink;
+                centerBox.appendChild(solvedLinkText);
+
+                gridEl.classList.add('puzzle-solved');
+                setTimeout(startPhase2, 1000);
+            } else {
+                displayMessage('Incorrect Missing Link guess. Try again.', 'text-red-600');
+                linkInput.classList.add('input-error');
+                const centerBox = document.getElementById('missing-link-center-box');
+                centerBox.classList.add('shake');
+                setTimeout(() => { centerBox.classList.remove('shake'); }, 500);
+            }
+        }
+
+        // --- Phase 2 Functions ---
+         function startPhase2() {
+             if (gameComplete) return;
+             puzzleTitleEl.textContent = "Phase 2: Who or what links the clues?";
+             displayMessage('Find the male  characters linking these women!', 'text-blue-600');
+
+             const phase2Boxes = gridEl.querySelectorAll('.phase2-box');
+             phase2Boxes.forEach(box => {
+                 box.classList.add('active');
+             });
+         }
+
+        function handlePhase2Submit(phase2ClueId) {
+            if (gameComplete) return;
+
+            const clueData = gameData.getPhase2ClueById(phase2ClueId);
+            if (!clueData || clueData.solved) return;
+
+            const container = gridEl.querySelector(`.phase2-box[data-phase2-clue-id='${phase2ClueId}']`);
+            const input = container.querySelector('input');
+            const guess = input.value.trim();
+
+            if (!guess) return;
+
+            const normalizedGuess = guess.toLowerCase().replace(/\s+/g, ' ');
+            const normalizedSolution = clueData.solution.toLowerCase().replace(/\s+/g, ' ');
+
+            if (normalizedGuess === normalizedSolution) {
+                clueData.solved = true;
+                solvedPhase2Count++;
+                container.classList.add('solved');
+
+                container.innerHTML = '';
+                const solutionText = document.createElement('div');
+                solutionText.classList.add('solution-text');
+                solutionText.textContent = clueData.solution;
+                container.appendChild(solutionText);
+
+                displayMessage(`Link ${solvedPhase2Count}/${totalPhase2Clues} found!`, 'text-teal-600');
+
+                if (solvedPhase2Count === totalPhase2Clues) {
+                    gameComplete = true;
+                    setTimeout(endGameCelebration, 500);
+                }
+
+            } else {
+                input.classList.add('input-error');
+                displayMessage('Incorrect link. Try again.', 'text-orange-600');
+                container.classList.add('shake');
+                setTimeout(() => { container.classList.remove('shake'); }, 500);
+            }
+        }
+
+         function endGameCelebration() {
+             puzzleTitleEl.textContent = "Puzzle completed!";
+             messageAreaEl.classList.add('final-celebration');
+             displayMessage('😈 Congratulations! You are truly devious! 😈', 'text-lg font-bold text-purple-600');
+         }
+
+        // --- Message Functions ---
+        function displayMessage(text, styleClasses = 'text-stone-700') {
+            messageAreaEl.textContent = text;
+            messageAreaEl.className = 'h-10 mb-4 text-center font-medium';
+            messageAreaEl.classList.add(...styleClasses.split(' '));
+        }
+
+        function clearMessage() {
+             const currentText = messageAreaEl.textContent;
+             if (!currentText.includes("Phase 2:") && !currentText.includes("Congratulations!")) {
+                 messageAreaEl.textContent = '';
+                 messageAreaEl.className = 'h-10 mb-4 text-center font-medium';
+             }
+        }
+
+        // --- Initialize Game ---
+        document.addEventListener('DOMContentLoaded', initGame);
+    </script>
+
+</body>
+</html>
