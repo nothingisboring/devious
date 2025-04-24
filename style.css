@@ -143,6 +143,7 @@
          .phase2-box.solved .solution-text {
              font-weight: 500; font-size: 0.9rem;
          }
+
 /* Floating "How to Play" Button */
 #howToPlayButton {
     position: fixed;
@@ -151,6 +152,7 @@
     width: 48px;
     height: 48px;
     background-color: var(--clr-primary);
+    z-index: 50;
     color: var(--clr-text-on-primary);
     border-radius: 50%;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -160,6 +162,7 @@
     align-items: center;
     justify-content: center;
     transition: background-color 0.2s;
+    visibility: visible;
 }
 #howToPlayButton:hover {
     background-color: var(--clr-primary-hover);
@@ -177,6 +180,7 @@
     z-index: 1000;
     justify-content: center;
     align-items: center;
+    visibility: visible;
 }
 
 #howToPlayModal .modal-content {
