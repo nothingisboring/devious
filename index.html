@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bungee+Shade&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bungee+Shade&family=Inter&family=Quicksand:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -17,6 +17,75 @@
             font-family: 'Bungee Shade', Sans-Serif; /* Use Bungee Outline */
             font-weight: 400; /* Bungee Outline typically only has 400 weight */
         }
+h2 {
+            font-family: 'Quicksand', Sans-Serif;
+            font-weight: 400;
+         }
+
+.city {
+  background-color: Indianred;
+  color: white;
+  padding: 10px;
+} 
+
+.bum {
+  background-color: Indianred;
+  color: white;
+  padding: 10px;
+} 
+
+.arse {
+  background-color: steelblue;
+  color: white;
+  padding: 10px;
+} 
+
+.city, .bum, .arse {
+  font-family: 'Quicksand';
+}
+
+.nob {
+  font-family: 'Lora', black;
+}
+
+.clue-list {
+  list-style-type: none;
+  padding-left: 15px;
+}
+
+.clue-list li {
+  margin-bottom: 15px;
+  position: relative;
+  padding-left: 20px;
+}
+
+.clue-list li:before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #CD5C5C; /* Gold bullet points */
+  font-size: 1.2em;
+}
+
+.highlight {
+  color: #FFC107; /* Amber color that works with steelblue */
+  font-weight: bold;
+}
+
+.examples {
+  margin-top: 3px;
+  margin-bottom: 10px;
+  padding-left: 15px;
+  font-style: italic;
+}
+
+.footnote {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.3);
+  font-style: italic;
+  font-size: 0.9em;
+}
 
         /* --- Animations --- */
         @keyframes shake {
@@ -154,7 +223,7 @@
             <br><br>
             Click on a box to answer, and submit your guess. <br><br><b>Are you a <b>Genius</b> or <b>Jinglebrains</b>? You'll soon find out!</b>
         </p>
-<h2 class="arse"><b>What makes <span class="highlight">Devious</span> devious is the variety of clues:</b></h2>
+        <h2 class="arse"><b>What makes <span class="highlight">Devious</span> devious is the variety of clues:</b></h2>
 
 <div class="nob">
     <div class="bullet-point"><b>Lightly cryptic crossword</b>*
@@ -537,6 +606,29 @@ function handleLinkSubmit() {
 
         // --- Initialize Game ---
         document.addEventListener('DOMContentLoaded', initGame);
+        
+         // Setup How to Play modal
+  const howToPlayButton = document.getElementById('howToPlayButton');
+  const howToPlayModal = document.getElementById('howToPlayModal');
+  const closeModalButton = document.getElementById('closeModalButton');
+  
+  howToPlayButton.addEventListener('click', () => {
+    howToPlayModal.classList.remove('hidden');
+    howToPlayModal.classList.add('flex');
+  });
+  
+  closeModalButton.addEventListener('click', () => {
+    howToPlayModal.classList.add('hidden');
+    howToPlayModal.classList.remove('flex');
+  });
+  
+  howToPlayModal.addEventListener('click', (event) => {
+    if (event.target === howToPlayModal) {
+      howToPlayModal.classList.add('hidden');
+      howToPlayModal.classList.remove('flex');
+    }
+  });
+        
     </script>
 
 </body>
