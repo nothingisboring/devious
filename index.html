@@ -7,14 +7,14 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bungee+Outline&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bungee+Shade&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f5f5f4; /* stone-100 */
         }
         h1 {
-            font-family: 'Bungee Outline', Sans-Serif; /* Use Bungee Outline */
+            font-family: 'Bungee Shade', Sans-Serif; /* Use Bungee Outline */
             font-weight: 400; /* Bungee Outline typically only has 400 weight */
         }
 
@@ -38,7 +38,7 @@
 
         /* --- General Styles --- */
         #source-type-emoji {
-            font-size: 3rem; line-height: 1; margin-bottom: 0.5rem;
+            font-size: 2rem; line-height: 1; margin-bottom: 0.5rem;
         }
         #puzzle-title {
             color: #44403c; /* stone-700 */
@@ -98,6 +98,12 @@
              padding: 3px 10px; font-size: 0.8rem; background-color: #12b093; color: white; border: none; border-radius: 0.25rem; cursor: pointer; transition: background-color 0.2s;
          }
         .clue-box-back button:hover { background-color: #0e8e77; }
+        .clue-blocked {
+        background-color: #f8d7da; /* Light red background */
+        color: #842029; /* Dark red text */
+        pointer-events: none; /* Disable interactions */
+        opacity: 0.7; /* Slightly fade blocked clues */
+        }
         .clue-solved .clue-box-front {
             background-color: #12b093; border-color: #0e8e77; color: #ffffff; font-weight: 500;
         }
@@ -111,13 +117,14 @@
          .link-solved .clue-box-container.clue-solved .clue-box-inner {
              opacity: 0.8; /* Slightly fade solved clues too */
          }
+         
 
 
     </style>
 </head>
 <body class="flex flex-col items-center min-h-screen p-4 bg-stone-100">
 
-    <header class="text-center mb-4">
+ <header class="text-center mb-4">
          <h1 class="text-4xl font-bold mb-2 text-stone-800">Byzantine</h1>
          <div id="puzzle-title" class="text-lg text-stone-700">Solve the clues to find the link!</div>
          <div id="source-type-emoji" class="text-3xl mb-2"></div>
@@ -137,15 +144,15 @@
             // Updated to 8 clues
             clues: [
                 // Original Clues (IDs 1-4)
-                { id: 1, text: "Eugh! That___ (wafts hand) (5)", solution: "Reeks", solved: false, gridPos: [1, 2] }, // Top Middle
-                { id: 2, text: "Finished tit, we hear (3,5)", solution: "Dun Breast", solved: false, gridPos: [2, 1] },       // Middle Left
-                { id: 3, text: "Jet filaments (5,5)", solution: "Black Wires", solved: false, gridPos: [2, 3] },      // Middle Right
-                { id: 4, text: "Hiphop superhero stood? (6,4)", solution: "Damask Rose", solved: false, gridPos: [3, 2] }, // Bottom Middle - Changed from Mr Collins
+                { id: 1, text: "Eugh! That___ (wafts hand) (5)", solution: "Reeks", solved: false, attempts: 0, gridPos: [1, 2] }, // Top Middle
+                { id: 2, text: "Finished tit, we hear (3,5)", solution: "Dun Breast", solved: false, attempts: 0, gridPos: [2, 1] },       // Middle Left
+                { id: 3, text: "Jet filaments (5,5)", solution: "Black Wires", solved: false, attempts: 0,  gridPos: [2, 3] },      // Middle Right
+                { id: 4, text: "Hiphop superhero stood? (6,4)", solution: "Damask Rose", solved: false, attempts: 0, gridPos: [3, 2] }, // Bottom Middle - Changed from Mr Collins
                 // New Clues (IDs 5-8)
-                { id: 5, text: "Wow, short Alan (5)", solution: "Coral", solved: false, gridPos: [1, 1] }, // Top Left
-                { id: 6, text: "Star (3)", solution: "sun", solved: false, gridPos: [1, 3] }, // Top Right
-                { id: 7, text: "Sounds like my tension up t'north (8)", solution: "mistress", solved: false, gridPos: [3, 1] },     // Bottom Left
-                { id: 8, text: "An unreliable MC, say? (5,7)", solution: "False Compare", solved: false, gridPos: [3, 3] }      // Bottom Right
+                { id: 5, text: "Wow, short Alan (5)", solution: "Coral", solved: false, attempts: 0, gridPos: [1, 1] }, // Top Left
+                { id: 6, text: "Star (3)", solution: "sun", solved: false, attempts: 0, gridPos: [1, 3] }, // Top Right
+                { id: 7, text: "Sounds like my tension up t'north (8)", solution: "mistress", solved: false, attempts: 0, gridPos: [3, 1] },     // Bottom Left
+                { id: 8, text: "An unreliable MC, say? (5,7)", solution: "False Compare", solved: false, attempts: 0, gridPos: [3, 3] }      // Bottom Right
             ],
             // Removed phase2Clues
             getClueById: function(id) {
@@ -160,6 +167,7 @@
         let linkSolved = false;
         let gameComplete = false; // Use this to lock interactions after link solve
         let score = 0; // Added score variable
+        let blockedCluesCount = 0; // Track the number of blocked clues
 
         // --- DOM Elements ---
         const gridEl = document.getElementById('missing-link-grid');
@@ -281,39 +289,67 @@
         }
 
         function handleClueSubmit(clueId) {
-            if (linkSolved || gameComplete) return; // Lock after link is solved
+    if (linkSolved || gameComplete) return; // Lock after link is solved
 
-            const container = gridEl.querySelector(`.clue-box-container[data-clue-id='${clueId}']`);
-            const input = container.querySelector('.clue-box-back input');
-            const front = container.querySelector('.clue-box-front');
-            const clueData = gameData.getClueById(clueId);
-            const guess = input.value.trim();
+    const container = gridEl.querySelector(`.clue-box-container[data-clue-id='${clueId}']`);
+    const input = container.querySelector('.clue-box-back input');
+    const front = container.querySelector('.clue-box-front');
+    const clueData = gameData.getClueById(clueId);
+    const guess = input.value.trim();
 
-            if (!clueData || !guess || clueData.solved) return;
+    if (!clueData || !guess || clueData.solved) return;
 
-            const normalizedGuess = guess.toLowerCase().replace(/\s+/g, ' ');
-            const normalizedSolution = clueData.solution.toLowerCase().replace(/\s+/g, ' ');
+    const normalizedGuess = guess.toLowerCase().replace(/\s+/g, ' ');
+    const normalizedSolution = clueData.solution.toLowerCase().replace(/\s+/g, ' ');
 
-            if (normalizedGuess === normalizedSolution) {
-                clueData.solved = true;
-                solvedCluesCount++; // Increment count
-                front.textContent = clueData.solution;
-                container.classList.add('clue-solved');
-                container.classList.remove('is-flipped');
-                input.value = ''; input.disabled = true;
-                container.querySelector('.clue-box-back button').disabled = true;
-                displayMessage(`Clue solved! (${solvedCluesCount}/${totalClues})`, 'text-teal-600');
+    // Check if the answer is correct
+    if (normalizedGuess === normalizedSolution) {
+        clueData.solved = true;
+        solvedCluesCount++; // Increment count
+        front.textContent = clueData.solution;
+        container.classList.add('clue-solved');
+        container.classList.remove('is-flipped');
+        input.value = ''; input.disabled = true;
+        container.querySelector('.clue-box-back button').disabled = true;
+        displayMessage(`Clue solved! (${solvedCluesCount}/${totalClues})`, 'text-teal-600');
 
-                // Check if enough clues are solved to enable the link input
-                checkClueCountForLink();
+        // Check if enough clues are solved to enable the link input
+        checkClueCountForLink();
 
-            } else {
-                input.classList.add('input-error');
-                displayMessage('Incorrect clue answer.', 'text-orange-600');
-                container.querySelector('.clue-box-inner').classList.add('shake');
-                setTimeout(() => { container.querySelector('.clue-box-inner').classList.remove('shake'); }, 500);
-            }
+    } else {
+        // Increment the attempts counter
+        clueData.attempts++;
+        input.classList.add('input-error');
+        displayMessage('Incorrect clue answer.', 'text-orange-600');
+        container.querySelector('.clue-box-inner').classList.add('shake');
+        setTimeout(() => { container.querySelector('.clue-box-inner').classList.remove('shake'); }, 500);
+
+        // If the player has used up 2 attempts, block and obscure the clue
+        if (clueData.attempts >= 2) {
+            blockAndObscureClue(container, front, clueData);
         }
+    }
+}
+
+function blockAndObscureClue(container, front, clueData) {
+    // Mark the clue as blocked
+    clueData.solved = true; // Prevent further interaction
+    blockedCluesCount++; // Increment the count of blocked clues
+
+    // Obscure the clue visually
+    front.textContent = "❌ Blocked";
+    container.classList.add('clue-blocked'); // Add a class for styling
+    container.classList.remove('is-flipped');
+
+    // Disable input and button
+    const input = container.querySelector('.clue-box-back input');
+    const button = container.querySelector('.clue-box-back button');
+    input.value = ''; input.disabled = true;
+    button.disabled = true;
+
+    // Display a message
+    displayMessage('Clue blocked after 2 incorrect attempts.', 'text-red-600');
+}
 
          // New function to check if link input should be enabled
          function checkClueCountForLink() {
@@ -332,63 +368,68 @@
              }
          }
 
-        function handleLinkSubmit() {
-            if (linkSolved || gameComplete) return; // Prevent re-submission
+function handleLinkSubmit() {
+    if (linkSolved || gameComplete) return; // Prevent re-submission
 
-            const linkInput = document.getElementById('missing-link-guess');
-            const guess = linkInput.value.trim();
-            const normalizedGuess = guess.toLowerCase().replace(/\s+/g, ' ');
-            const normalizedSolution = gameData.missingLink.toLowerCase().replace(/\s+/g, ' ');
+    const linkInput = document.getElementById('missing-link-guess');
+    const guess = linkInput.value.trim();
+    const normalizedGuess = guess.toLowerCase().replace(/\s+/g, ' ');
+    const normalizedSolution = gameData.missingLink.toLowerCase().replace(/\s+/g, ' ');
 
-            if (normalizedGuess === normalizedSolution) {
-                linkSolved = true;
-                gameComplete = true; // Mark game as complete
+    if (normalizedGuess === normalizedSolution) {
+        linkSolved = true;
+        gameComplete = true; // Mark game as complete
 
-                // --- Calculate Score ---
-                if (solvedCluesCount === 4) {
-                    score = 100;
-                } else if (solvedCluesCount === 5) {
-                    score = 80;
-                } else if (solvedCluesCount === 6) {
-                    score = 60;
-                } else if (solvedCluesCount === 7) {
-                    score = 40;
-                } else { // Solved after 8 clues (or more, though max is 8)
-                    score = 20;
-                }
-
-                // Display score and final message
-                scoreDisplayEl.textContent = `Score: ${score} points!`;
-                displayMessage('Missing Link Correct!', 'text-teal-600'); // Initial confirmation
-
-                // Disable center input/button permanently
-                linkInput.disabled = true;
-                document.getElementById('submit-link').disabled = true;
-                document.getElementById('missing-link-title').textContent = 'Link Found!';
-
-                // Show solved link text
-                const centerBox = document.getElementById('missing-link-center-box');
-                linkInput.style.display = 'none';
-                document.getElementById('submit-link').style.display = 'none';
-                const solvedLinkText = document.createElement('div');
-                solvedLinkText.classList.add('correct-link');
-                solvedLinkText.textContent = gameData.missingLink;
-                centerBox.appendChild(solvedLinkText);
-
-                // Add class to grid to style solved state (e.g., fade unsolved clues)
-                gridEl.classList.add('link-solved');
-
-                // Trigger final celebration message after a delay
-                setTimeout(endGameCelebration, 1200);
-
-            } else {
-                displayMessage('Incorrect Missing Link guess. Try again.', 'text-red-600');
-                linkInput.classList.add('input-error');
-                const centerBox = document.getElementById('missing-link-center-box');
-                centerBox.classList.add('shake');
-                setTimeout(() => { centerBox.classList.remove('shake'); }, 500);
-            }
+        // --- Calculate Base Score ---
+        if (solvedCluesCount === 4) {
+            score = 100;
+        } else if (solvedCluesCount === 5) {
+            score = 80;
+        } else if (solvedCluesCount === 6) {
+            score = 60;
+        } else if (solvedCluesCount === 7) {
+            score = 40;
+        } else { // Solved after 8 clues (or more, though max is 8)
+            score = 20;
         }
+
+        // --- Deduct Points for Blocked Clues ---
+        const penaltyPerBlockedClue = 10; // Deduct 10 points per blocked clue
+        const penalty = blockedCluesCount * penaltyPerBlockedClue;
+        score = Math.max(0, score - penalty); // Ensure score doesn't go below 0
+
+        // Display score and final message
+        scoreDisplayEl.textContent = `Score: ${score} points!`;
+        displayMessage('Missing Link Correct!', 'text-teal-600'); // Initial confirmation
+
+        // Disable center input/button permanently
+        linkInput.disabled = true;
+        document.getElementById('submit-link').disabled = true;
+        document.getElementById('missing-link-title').textContent = 'Link Found!';
+
+        // Show solved link text
+        const centerBox = document.getElementById('missing-link-center-box');
+        linkInput.style.display = 'none';
+        document.getElementById('submit-link').style.display = 'none';
+        const solvedLinkText = document.createElement('div');
+        solvedLinkText.classList.add('correct-link');
+        solvedLinkText.textContent = gameData.missingLink;
+        centerBox.appendChild(solvedLinkText);
+
+        // Add class to grid to style solved state (e.g., fade unsolved clues)
+        gridEl.classList.add('link-solved');
+
+        // Trigger final celebration message after a delay
+        setTimeout(endGameCelebration, 1200);
+
+    } else {
+        displayMessage('Incorrect Missing Link guess. Try again.', 'text-red-600');
+        linkInput.classList.add('input-error');
+        const centerBox = document.getElementById('missing-link-center-box');
+        centerBox.classList.add('shake');
+        setTimeout(() => { centerBox.classList.remove('shake'); }, 500);
+    }
+}
 
         // Removed Phase 2 functions: startPhase2, handlePhase2Submit
 
