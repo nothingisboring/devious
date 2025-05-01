@@ -3,66 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oblique</title>
+    <title>Byzantine</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bungee Outline&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-   
-<body class="flex flex-col items-center min-h-screen p-4"> <header class="text-center mb-6 w-full max-w-3xl">
-         <img
-            src="https://see.fontimg.com/api/rf5/jr40/YzY2YzczZGI3MzIxNDIxOWE2ZmUwOThlZTA5MzMxNGMudHRm/T0JMSVFVRQ/blus-blocks.png?r=dw&h=56&w=1000&fg=0C1442&bg=FFFFFF&s=56"
-            alt="Game Banner - Replace with descriptive text"
-            class="w-50 h-auto mb-4 rounded-md shadow-sm game-banner-image mx-auto"
-            onerror="this.onerror=null; this.src='https://placehold.co/800x150/cccccc/ffffff?text=Image+Error';">
-        <h2 class="text-1xl font-bold mb-2 text-stone-600"></h2>
-        <h2 class="text-1xl font-regular mb-2 text-stone-600">Can you solve today's slightly oblique cultural puzzle?</h2>
-        <div id="source-type-emoji" class="text-2xl mb-2"></div> 
-         <div id="score-display"></div>
-    <!-- Add this inside the <body> tag -->
-<button id="howToPlayButton" title="How to Play" 
-    class="fixed bottom-4 right-4 w-12 h-12 bg-gray-800 text-white rounded-full shadow-lg flex items-center justify-center text-lg hover:bg-gray-700 z-50">
-    ?
-</button>
+    <link href="https://fonts.googleapis.com/css2?family=Bungee+Outline&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f5f5f4; /* stone-100 */
+        }
+        h1 {
+            font-family: 'Bungee Outline', Sans-Serif; /* Use Bungee Outline */
+            font-weight: 400; /* Bungee Outline typically only has 400 weight */
+        }
 
-<!-- Add a hidden modal for instructions -->
-<div id="howToPlayModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-        <h3 class="text-xl font-bold mb-4 text-center">How to Play</h3>
-        <p class="text-gray-700 text-sm mb-4">
-            Solve the cryptic cultural puzzle by completing each phase:
-            <br><br>
-            - **Phase 1:** Solve the clues around the center box.
-            <br>
-            - **Phase 2:** Solve the four corner clues after Phase 1.
-            <br>
-            - **Phase 3:** Solve the final clue in the center box.
-            <br><br>
-            Click on a box to answer, and submit your guess. Good luck!
-        </p>
-        <button id="closeModalButton" class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700 w-full">
-            Got it!
-        </button>
-    </div>
-</div>
-         </header>
+        /* --- Animations --- */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
+            20%, 40%, 60%, 80% { transform: translateX(6px); }
+        }
+        .shake { animation: shake 0.5s ease-in-out; }
+        @keyframes reveal {
+            0% { transform: scale(0.5); opacity: 0; }
+            80% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .final-celebration { animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: .7; }
+        }
 
-    <div id="message-area" class="h-10 mb-4 text-center font-medium"></div>
+        /* --- General Styles --- */
+        #source-type-emoji {
+            font-size: 3rem; line-height: 1; margin-bottom: 0.5rem;
+        }
+        #puzzle-title {
+            color: #44403c; /* stone-700 */
+        }
+        #score-display {
+            margin-top: 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #4d7c0f; /* Tailwind lime-700 */
+            height: 1.5rem; /* Reserve space */
+        }
 
-    <div id="missing-link-grid" class="missing-link-grid">
-        </div>
+        /* Grid container */
+        .missing-link-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(120px, 1fr));
+            grid-template-rows: repeat(3, minmax(100px, 1fr));
+            gap: 1rem; width: 100%; max-width: 500px; aspect-ratio: 1 / 1; margin-bottom: 1.5rem;
+        }
 
-     <div id="solutions-modal-container"></div>
+        /* Central Missing Link Box */
+        .missing-link-center {
+            grid-column: 2 / 3;
+            grid-row: 2 / 3;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #ffffff; border: 2px solid #d1d5db; border-radius: 0.375rem; padding: 1rem; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); text-align: center;
+        }
+        .missing-link-center input {
+            width: 90%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 0.25rem; margin-bottom: 8px; text-align: center;
+        }
+         .missing-link-center input::placeholder { color: #9ca3af; }
+         .missing-link-center input.input-error { border-color: #ef4444; background-color: #fee2e2; }
+        .missing-link-center button {
+            padding: 4px 12px; font-size: 0.85rem; background-color: #12b093; color: white; border: none; border-radius: 0.25rem; cursor: pointer; transition: background-color 0.2s;
+        }
+        .missing-link-center button:hover:not(:disabled) { background-color: #0e8e77; }
+        .missing-link-center button:disabled { background-color: #6cd4c1; cursor: not-allowed; }
+        .missing-link-center p { font-size: 0.8rem; color: #57534e; margin-bottom: 5px; }
+        .missing-link-center .correct-link {
+            font-weight: 700; font-size: 1.1rem; color: #12b093; animation: reveal 0.6s ease-out forwards;
+        }
 
-  </head>
+        /* --- Clue Box Styles (Now 8 clues) --- */
+        .clue-box-container {
+            perspective: 1000px; min-height: 100px; height: 100%;
+            /* Assign grid positions using data attributes */
+            grid-column: var(--col);
+            grid-row: var(--row);
+        }
+
+        .clue-box-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; cursor: pointer; }
+        .clue-box-container.is-flipped .clue-box-inner { transform: rotateY(180deg); }
+        .clue-box-front, .clue-box-back { position: absolute; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.75rem; border: 2px solid #d1d5db; border-radius: 0.375rem; background-color: #ffffff; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); color: #1f2937; }
+        .clue-box-back { background-color: #f0f9ff; border-color: #7dd3fc; transform: rotateY(180deg); }
+        .clue-box-back input { width: 90%; padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 0.25rem; margin-bottom: 5px; text-align: center; }
+        .clue-box-back input.input-error { border-color: #ef4444; background-color: #fee2e2; }
+        .clue-box-back button {
+             padding: 3px 10px; font-size: 0.8rem; background-color: #12b093; color: white; border: none; border-radius: 0.25rem; cursor: pointer; transition: background-color 0.2s;
+         }
+        .clue-box-back button:hover { background-color: #0e8e77; }
+        .clue-solved .clue-box-front {
+            background-color: #12b093; border-color: #0e8e77; color: #ffffff; font-weight: 500;
+        }
+        .clue-solved .clue-box-inner { cursor: default; }
+         /* Style for when link is solved, fading clues slightly */
+         .link-solved .clue-box-container:not(.clue-solved) .clue-box-inner {
+             opacity: 0.6; /* Fade unsolved clues */
+             cursor: default;
+             pointer-events: none;
+         }
+         .link-solved .clue-box-container.clue-solved .clue-box-inner {
+             opacity: 0.8; /* Slightly fade solved clues too */
+         }
+
+
+    </style>
+</head>
 <body class="flex flex-col items-center min-h-screen p-4 bg-stone-100">
 
     <header class="text-center mb-4">
-    <h1 class="text-4xl font-bold mb-2 text-stone-800"></h1>
-    <div id="puzzle-title" class="text-lg text-stone-700"></div>
-    <div id="source-type-emoji" class="text-2xl mb-2"></div>
-</header>
+         <div id="source-type-emoji" class="text-5xl mb-2"></div>
+         <h1 class="text-4xl font-bold mb-2 text-stone-800">Byzantine</h1>
+         <div id="puzzle-title" class="text-lg text-stone-700">Solve the clues to find the link!</div>
+         <div id="score-display"></div>
+    </header>
 
     <div id="message-area" class="h-10 mb-4 text-center font-medium"></div>
 
@@ -72,78 +132,78 @@
     <script>
         // --- Game Data ---
         const gameData = {
-            missingLink: "Pride and Prejudice",
+            missingLink: "Sonnet 130",
             sourceTypeEmoji: '📚',
+            // Updated to 8 clues
             clues: [
-                { id: 1, text: "Almost a Greek mode (5)", solution: "Lydia", solved: false },
-                { id: 2, text: "Plain girl? (4)", solution: "Jane", solved: false },
-                { id: 3, text: "Fund baby cat? (5)", solution: "Kitty", solved: false },
-                { id: 4, text: "Short for I or II (6)", solution: "Lizzie", solved: false }
+                // Original Clues (IDs 1-4)
+                { id: 1, text: "Eugh! That___ (wafts hand) (5)", solution: "Reeks", solved: false, gridPos: [1, 2] }, // Top Middle
+                { id: 2, text: "Finished tit, we hear (3,5)", solution: "Dun Breast", solved: false, gridPos: [2, 1] },       // Middle Left
+                { id: 3, text: "Jet filaments (5,5)", solution: "Black Wires", solved: false, gridPos: [2, 3] },      // Middle Right
+                { id: 4, text: "Hiphop superhero stood? (6,4)", solution: "Damask Rose", solved: false, gridPos: [3, 2] }, // Bottom Middle - Changed from Mr Collins
+                // New Clues (IDs 5-8)
+                { id: 5, text: "Wow, short Alan (5)", solution: "Coral", solved: false, gridPos: [1, 1] }, // Top Left
+                { id: 6, text: "Star (3)", solution: "sun", solved: false, gridPos: [1, 3] }, // Top Right
+                { id: 7, text: "Sounds like my tension up t'north (8)", solution: "mistress", solved: false, gridPos: [3, 1] },     // Bottom Left
+                { id: 8, text: "An unreliable MC, say? (5,7)", solution: "False Compare", solved: false, gridPos: [3, 3] }      // Bottom Right
             ],
-            phase2Clues: [
-                { id: 'p2_1', gridPos: [1, 1], arrow: '&#8625;', links: [2, 1], solution: "Wickham", solved: false },
-                { id: 'p2_2', gridPos: [1, 3], arrow: '&#8624;', links: [3, 1], solution: "Wickham", solved: false },
-                { id: 'p2_3', gridPos: [3, 1], arrow: '&#8627;', links: [2, 4], solution: "Bingley", solved: false },
-                { id: 'p2_4', gridPos: [3, 3], arrow: '&#8626;', links: [3, 4], solution: "Collins", solved: false }
-            ],
+            // Removed phase2Clues
             getClueById: function(id) {
                 return this.clues.find(clue => clue.id === id);
-            },
-            getPhase2ClueById: function(id) {
-                 return this.phase2Clues.find(clue => clue.id === id);
             }
+            // Removed getPhase2ClueById
         };
 
         // --- Game State ---
         let solvedCluesCount = 0;
-        let totalClues = gameData.clues.length;
+        let totalClues = gameData.clues.length; // Now 8
         let linkSolved = false;
-        let solvedPhase2Count = 0;
-        let totalPhase2Clues = gameData.phase2Clues.length;
-        let gameComplete = false;
+        let gameComplete = false; // Use this to lock interactions after link solve
+        let score = 0; // Added score variable
 
         // --- DOM Elements ---
         const gridEl = document.getElementById('missing-link-grid');
         const messageAreaEl = document.getElementById('message-area');
         const emojiIndicatorEl = document.getElementById('source-type-emoji');
         const puzzleTitleEl = document.getElementById('puzzle-title');
-
+        const scoreDisplayEl = document.getElementById('score-display'); // Score display element
 
         // --- Initialization ---
         function initGame() {
             gridEl.innerHTML = '';
+            // Reset state
             solvedCluesCount = 0;
             linkSolved = false;
-            solvedPhase2Count = 0;
             gameComplete = false;
+            score = 0;
             messageAreaEl.textContent = '';
-            puzzleTitleEl.textContent = '';
+            scoreDisplayEl.textContent = ''; // Clear score display
+            puzzleTitleEl.textContent = 'Solve the clues to find the link!';
             emojiIndicatorEl.textContent = gameData.sourceTypeEmoji || '';
             gameData.clues.forEach(clue => clue.solved = false);
-            gameData.phase2Clues.forEach(clue => clue.solved = false);
 
-            // --- Create ALL Grid Boxes (Phase 1 Clues, Center, Phase 2 Placeholders) ---
-            // Phase 1 Clue Boxes
+            // --- Create Grid Boxes ---
+            // Clue Boxes (now 8)
             gameData.clues.forEach(clueData => {
-                gridEl.appendChild(createPhase1ClueBox(clueData));
+                gridEl.appendChild(createClueBox(clueData));
             });
 
             // Central Missing Link Box
             gridEl.appendChild(createCenterBox());
 
-            // Phase 2 Corner Boxes (created hidden)
-            gameData.phase2Clues.forEach(p2Data => {
-                 gridEl.appendChild(createPhase2Box(p2Data));
-            });
-
-            checkAllCluesSolved();
+            // Initial check to disable link input
+            checkClueCountForLink();
         }
 
         // --- Element Creation Functions ---
-        function createPhase1ClueBox(clueData) {
+        function createClueBox(clueData) { // Renamed from createPhase1ClueBox
              const container = document.createElement('div');
              container.classList.add('clue-box-container');
              container.dataset.clueId = clueData.id;
+             // Set grid position using CSS variables from data
+             container.style.setProperty('--col', clueData.gridPos[1]);
+             container.style.setProperty('--row', clueData.gridPos[0]);
+
 
              const inner = document.createElement('div');
              inner.classList.add('clue-box-inner');
@@ -169,77 +229,50 @@
              back.appendChild(input); back.appendChild(button);
              inner.appendChild(front); inner.appendChild(back);
              container.appendChild(inner);
-             container.addEventListener('click', handleBoxClick);
+             container.addEventListener('click', handleBoxClick); // Renamed handler
              return container;
         }
 
-        function createCenterBox() {
+        function createCenterBox() { // Unchanged
             const centerBox = document.createElement('div');
             centerBox.classList.add('missing-link-center');
             centerBox.id = 'missing-link-center-box';
-
             const centerTitle = document.createElement('p');
             centerTitle.textContent = 'The Missing Link?'; centerTitle.id = 'missing-link-title';
-
             const centerInput = document.createElement('input');
             centerInput.type = 'text'; centerInput.id = 'missing-link-guess';
-            centerInput.placeholder = 'Guess the link...'; centerInput.disabled = true;
+            centerInput.placeholder = 'Guess the link...'; centerInput.disabled = true; // Start disabled
             centerInput.addEventListener('keydown', (e) => {
                  if (e.key === 'Enter') handleLinkSubmit();
                  centerInput.classList.remove('input-error');
             });
-
             const centerButton = document.createElement('button');
-            centerButton.id = 'submit-link'; centerButton.textContent = 'Submit Link'; centerButton.disabled = true;
+            centerButton.id = 'submit-link'; centerButton.textContent = 'Submit Link'; centerButton.disabled = true; // Start disabled
             centerButton.addEventListener('click', handleLinkSubmit);
-
             centerBox.appendChild(centerTitle); centerBox.appendChild(centerInput); centerBox.appendChild(centerButton);
             return centerBox;
         }
-
-         function createPhase2Box(p2Data) {
-             const box = document.createElement('div');
-             box.classList.add('phase2-box');
-             box.dataset.phase2ClueId = p2Data.id;
-
-             // *** Directly set grid position using inline styles ***
-             box.style.gridColumn = `${p2Data.gridPos[1]} / span 1`;
-             box.style.gridRow = `${p2Data.gridPos[0]} / span 1`;
-
-             const arrowEl = document.createElement('div');
-             arrowEl.classList.add('arrow');
-             arrowEl.innerHTML = p2Data.arrow;
-             const input = document.createElement('input');
-             input.type = 'text'; input.placeholder = 'Link?';
-             input.addEventListener('keydown', (e) => {
-                 if (e.key === 'Enter') handlePhase2Submit(p2Data.id);
-                 input.classList.remove('input-error');
-             });
-
-             const button = document.createElement('button');
-             button.textContent = 'Submit';
-             button.addEventListener('click', (e) => { e.stopPropagation(); handlePhase2Submit(p2Data.id); });
-
-             box.appendChild(arrowEl);
-             box.appendChild(input);
-             box.appendChild(button);
-             return box;
-         }
+        // Removed createPhase2Box
 
         // --- Event Handlers & Logic ---
 
-        function handleBoxClick(event) {
+        function handleBoxClick(event) { // Now handles all clue boxes
             const container = event.currentTarget;
-            if (linkSolved || gameComplete) return;
+            if (linkSolved || gameComplete) return; // Lock after link is solved
+
             const clueId = parseInt(container.dataset.clueId);
             if (!clueId) return;
+
             const clueData = gameData.getClueById(clueId);
-            if (!clueData || clueData.solved) return;
+            if (!clueData || clueData.solved) return; // Don't flip solved boxes
+
+            // Flip logic (same as before)
             if (container.classList.contains('is-flipped')) {
                  if (event.target.tagName === 'INPUT' || event.target.tagName === 'BUTTON') return;
                  container.classList.remove('is-flipped');
                  clearMessage();
             } else {
+                // Unflip others before flipping this one? Optional.
                 container.classList.add('is-flipped');
                 const input = container.querySelector('.clue-box-back input');
                 if(input) input.focus();
@@ -248,7 +281,7 @@
         }
 
         function handleClueSubmit(clueId) {
-            if (linkSolved || gameComplete) return;
+            if (linkSolved || gameComplete) return; // Lock after link is solved
 
             const container = gridEl.querySelector(`.clue-box-container[data-clue-id='${clueId}']`);
             const input = container.querySelector('.clue-box-back input');
@@ -263,14 +296,17 @@
 
             if (normalizedGuess === normalizedSolution) {
                 clueData.solved = true;
-                solvedCluesCount++;
+                solvedCluesCount++; // Increment count
                 front.textContent = clueData.solution;
                 container.classList.add('clue-solved');
                 container.classList.remove('is-flipped');
                 input.value = ''; input.disabled = true;
                 container.querySelector('.clue-box-back button').disabled = true;
-                displayMessage(`Clue ${clueId} solved!`, 'text-teal-600');
-                checkAllCluesSolved();
+                displayMessage(`Clue solved! (${solvedCluesCount}/${totalClues})`, 'text-teal-600');
+
+                // Check if enough clues are solved to enable the link input
+                checkClueCountForLink();
+
             } else {
                 input.classList.add('input-error');
                 displayMessage('Incorrect clue answer.', 'text-orange-600');
@@ -279,20 +315,25 @@
             }
         }
 
-         function checkAllCluesSolved() {
+         // New function to check if link input should be enabled
+         function checkClueCountForLink() {
              const linkInput = document.getElementById('missing-link-guess');
              const linkButton = document.getElementById('submit-link');
-             if (solvedCluesCount === totalClues && !linkSolved) {
-                 linkInput.disabled = false; linkButton.disabled = false;
-                 displayMessage('All clues solved! Can you guess the Missing Link?', 'text-teal-600');
-                 linkInput.focus();
+             // Enable if 4 or more clues solved AND link isn't already solved
+             if (solvedCluesCount >= 4 && !linkSolved) {
+                 linkInput.disabled = false;
+                 linkButton.disabled = false;
+                 displayMessage(`Enough clues solved (${solvedCluesCount}/${totalClues})! Try guessing the link.`, 'text-blue-600');
+                 // linkInput.focus(); // Optional: auto-focus
              } else if (!linkSolved) {
-                 linkInput.disabled = true; linkButton.disabled = true;
+                 // Keep disabled if fewer than 4 clues or link already solved
+                 linkInput.disabled = true;
+                 linkButton.disabled = true;
              }
          }
 
         function handleLinkSubmit() {
-            if (linkSolved || gameComplete) return;
+            if (linkSolved || gameComplete) return; // Prevent re-submission
 
             const linkInput = document.getElementById('missing-link-guess');
             const guess = linkInput.value.trim();
@@ -301,22 +342,45 @@
 
             if (normalizedGuess === normalizedSolution) {
                 linkSolved = true;
-                displayMessage('Missing Link Correct!', 'text-teal-600');
+                gameComplete = true; // Mark game as complete
+
+                // --- Calculate Score ---
+                if (solvedCluesCount === 4) {
+                    score = 100;
+                } else if (solvedCluesCount === 5) {
+                    score = 80;
+                } else if (solvedCluesCount === 6) {
+                    score = 60;
+                } else if (solvedCluesCount === 7) {
+                    score = 40;
+                } else { // Solved after 8 clues (or more, though max is 8)
+                    score = 20;
+                }
+
+                // Display score and final message
+                scoreDisplayEl.textContent = `Score: ${score} points!`;
+                displayMessage('Missing Link Correct!', 'text-teal-600'); // Initial confirmation
+
+                // Disable center input/button permanently
                 linkInput.disabled = true;
                 document.getElementById('submit-link').disabled = true;
                 document.getElementById('missing-link-title').textContent = 'Link Found!';
 
+                // Show solved link text
                 const centerBox = document.getElementById('missing-link-center-box');
                 linkInput.style.display = 'none';
                 document.getElementById('submit-link').style.display = 'none';
-
                 const solvedLinkText = document.createElement('div');
                 solvedLinkText.classList.add('correct-link');
                 solvedLinkText.textContent = gameData.missingLink;
                 centerBox.appendChild(solvedLinkText);
 
-                gridEl.classList.add('puzzle-solved');
-                setTimeout(startPhase2, 1000);
+                // Add class to grid to style solved state (e.g., fade unsolved clues)
+                gridEl.classList.add('link-solved');
+
+                // Trigger final celebration message after a delay
+                setTimeout(endGameCelebration, 1200);
+
             } else {
                 displayMessage('Incorrect Missing Link guess. Try again.', 'text-red-600');
                 linkInput.classList.add('input-error');
@@ -326,110 +390,41 @@
             }
         }
 
-        // --- Phase 2 Functions ---
-         function startPhase2() {
-             if (gameComplete) return;
-             puzzleTitleEl.textContent = "Phase 2: Who or what links the clues?";
-             displayMessage('Find the male  characters linking these women!', 'text-blue-600');
-
-             const phase2Boxes = gridEl.querySelectorAll('.phase2-box');
-             phase2Boxes.forEach(box => {
-                 box.classList.add('active');
-             });
-         }
-
-        function handlePhase2Submit(phase2ClueId) {
-            if (gameComplete) return;
-
-            const clueData = gameData.getPhase2ClueById(phase2ClueId);
-            if (!clueData || clueData.solved) return;
-
-            const container = gridEl.querySelector(`.phase2-box[data-phase2-clue-id='${phase2ClueId}']`);
-            const input = container.querySelector('input');
-            const guess = input.value.trim();
-
-            if (!guess) return;
-
-            const normalizedGuess = guess.toLowerCase().replace(/\s+/g, ' ');
-            const normalizedSolution = clueData.solution.toLowerCase().replace(/\s+/g, ' ');
-
-            if (normalizedGuess === normalizedSolution) {
-                clueData.solved = true;
-                solvedPhase2Count++;
-                container.classList.add('solved');
-
-                container.innerHTML = '';
-                const solutionText = document.createElement('div');
-                solutionText.classList.add('solution-text');
-                solutionText.textContent = clueData.solution;
-                container.appendChild(solutionText);
-
-                displayMessage(`Link ${solvedPhase2Count}/${totalPhase2Clues} found!`, 'text-teal-600');
-
-                if (solvedPhase2Count === totalPhase2Clues) {
-                    gameComplete = true;
-                    setTimeout(endGameCelebration, 500);
-                }
-
-            } else {
-                input.classList.add('input-error');
-                displayMessage('Incorrect link. Try again.', 'text-orange-600');
-                container.classList.add('shake');
-                setTimeout(() => { container.classList.remove('shake'); }, 500);
-            }
-        }
+        // Removed Phase 2 functions: startPhase2, handlePhase2Submit
 
          function endGameCelebration() {
-             puzzleTitleEl.textContent = "Oblique completed!";
-             messageAreaEl.classList.add('final-celebration');
-             displayMessage('🧠 Congratulations! You can join the Obliquerati! 🧠', 'text-lg font-bold text-green-600');
+             puzzleTitleEl.textContent = "Byzantine Complete!";
+             // Update final message to include score
+             displayMessage(`🎉🥳 Congratulations! Solved with ${score} points! 🥳🎉`, 'text-lg font-bold text-purple-600 final-celebration');
+             // Optionally disable all remaining interactions if needed
+             const allInputs = gridEl.querySelectorAll('input');
+             const allButtons = gridEl.querySelectorAll('button');
+             allInputs.forEach(input => input.disabled = true);
+             allButtons.forEach(button => button.disabled = true);
+             gridEl.querySelectorAll('.clue-box-inner').forEach(inner => inner.style.cursor = 'default');
          }
 
         // --- Message Functions ---
         function displayMessage(text, styleClasses = 'text-stone-700') {
+            // Clear pulse animation if it's set
+            messageAreaEl.classList.remove('final-celebration');
             messageAreaEl.textContent = text;
-            messageAreaEl.className = 'h-10 mb-4 text-center font-medium';
+            messageAreaEl.className = 'h-10 mb-4 text-center font-medium'; // Reset base classes
+            // Add new style classes (handles multiple classes like 'text-lg text-purple-600')
             messageAreaEl.classList.add(...styleClasses.split(' '));
         }
 
         function clearMessage() {
              const currentText = messageAreaEl.textContent;
-             if (!currentText.includes("Phase 2:") && !currentText.includes("Congratulations!")) {
+             // Don't clear important messages
+             if (!currentText.includes("Link Found!") && !currentText.includes("Congratulations!")) {
                  messageAreaEl.textContent = '';
-                 messageAreaEl.className = 'h-10 mb-4 text-center font-medium';
+                 messageAreaEl.className = 'h-10 mb-4 text-center font-medium'; // Reset style
              }
         }
-        
-        document.addEventListener('DOMContentLoaded', () => {
-    // --- Initialize Game ---
-    initGame();
 
-    // --- 'How to Play' Modal Logic ---
-    const howToPlayButton = document.getElementById('howToPlayButton');
-    const howToPlayModal = document.getElementById('howToPlayModal');
-    const closeModalButton = document.getElementById('closeModalButton');
-
-    // Show the modal when "How to Play" button is clicked
-    howToPlayButton.addEventListener('click', () => {
-        console.log('Button clicked!');
-        howToPlayModal.classList.remove('hidden');
-        howToPlayModal.classList.add('flex');
-    });
-
-    // Hide the modal when "Got it!" button is clicked
-    closeModalButton.addEventListener('click', () => {
-        howToPlayModal.classList.add('hidden');
-        howToPlayModal.classList.remove('flex');
-    });
-
-    // Hide the modal if the overlay (background) is clicked
-    howToPlayModal.addEventListener('click', (event) => {
-        if (event.target === howToPlayModal) {
-            howToPlayModal.classList.add('hidden');
-            howToPlayModal.classList.remove('flex');
-        }
-    });
-});
+        // --- Initialize Game ---
+        document.addEventListener('DOMContentLoaded', initGame);
     </script>
 
 </body>
